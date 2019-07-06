@@ -1,6 +1,7 @@
 package com.example.minidoyin.Fragment;
 
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -22,6 +23,7 @@ import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 import com.example.minidoyin.R;
+import com.example.minidoyin.ShowVideoActivity;
 import com.example.minidoyin.bean.Feed;
 import com.example.minidoyin.bean.FeedResponse;
 import com.example.minidoyin.network.DouyinService;
@@ -66,17 +68,17 @@ public class home_page_Fragment extends Fragment {
             @Override
             public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
                 ImageView imageView = new ImageView(viewGroup.getContext());
-                Log.i(TAG, "onCreateViewHolder: "+viewGroup.getContext());
                 imageView.setLayoutParams(new ViewGroup.LayoutParams
                         (ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
                 imageView.setAdjustViewBounds(true);
+                Log.i(TAG, "onCreateViewHolder: 1"+i);
                 return new MyViewHolder(imageView);
             }
             @Override
             public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
                 ImageView imageView =(ImageView) viewHolder.itemView;
                 String image_url=mfeeds.get(i).getImage_url();
-                String video_url=mfeeds.get(i).getVideo_url();
+                Log.i(TAG, "onBindViewHolder: 0"+i);
                 Glide.with(imageView.getContext()).load(image_url).into(imageView);
             }
             @Override
@@ -93,15 +95,19 @@ public class home_page_Fragment extends Fragment {
     /*
     @effect :自定义 viewholder
      */
-    public static class MyViewHolder extends RecyclerView.ViewHolder {
+    public class MyViewHolder extends RecyclerView.ViewHolder {
         public MyViewHolder(@NonNull View itemView){
             super(itemView);
             ImageView imageView = (ImageView) itemView;
             imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    //
+                    int position =recyclerView.getChildAdapterPosition(v);
+                    String video_url=mfeeds.get(position).getVideo_url();
+                    Log.i(TAG, "onClick: "+v.getContext());
+                    Intent intent = new Intent(v.getContext(), ShowVideoActivity.class);
+                    intent.putExtra("video_url",video_url);
+                    startActivity(intent);
                 }
             });
 
