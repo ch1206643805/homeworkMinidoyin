@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:orientation="vertical"
+    tools:context=".Page_Activity">
+
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/view_page"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        >
+        <fragment
+            android:id="@+id/middle_fragment"
+            android:name="com.example.minidoyin.Fragment.home_page_Fragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"></fragment>
+
+    </android.support.v4.view.ViewPager>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:background="@android:color/black"
+        android:layout_weight="10"
+        >
+        <Button
+            android:id="@+id/home_page_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:textColor="@android:color/white"
+            android:layout_weight="3"
+            android:text="首页"
+            android:textSize="25dp" />
+
+        <Button
+            android:id="@+id/follow_page_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:textColor="@android:color/white"
+            android:layout_weight="3"
+            android:textSize="25dp"
+            android:text="关注"/>
+
+
+        <Button
+            android:id="@+id/camera_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:drawable/button_onoff_indicator_off"
+            android:textColor="@android:color/black"
+            android:layout_weight="2"
+            android:textSize="25dp"
+            android:text="+"/>
+
+        <Button
+            android:id="@+id/message_page_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:textColor="@android:color/white"
+            android:layout_weight="3"
+            android:textSize="25dp"
+            android:text="消息"/>
+
+        <Button
+            android:id="@+id/me_page_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:textColor="@android:color/white"
+            android:layout_weight="3"
+            android:textSize="25dp"
+            android:text="我"/>
+
+    </LinearLayout>
+
+
+</LinearLayout>
