@@ -1,5 +1,6 @@
 package com.example.minidoyin;
 
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -62,6 +63,28 @@ public class Page_Activity extends AppCompatActivity {
                 return 4;
             }
         });
+    }
+
+
+
+
+
+
+
+
+    /*
+    @effect: 申请权限
+     */
+    private void requestPremission(){
+
+    }
+
+    /*
+    @effect：返回获取权限结果
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
 
