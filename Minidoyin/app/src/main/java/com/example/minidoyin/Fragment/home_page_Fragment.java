@@ -145,7 +145,7 @@ public class home_page_Fragment extends Fragment {
             }
             @Override
             public void onFailure(Call<FeedResponse> call, Throwable t) {
-                Log.i(TAG, "onFailure: ");
+                Log.i(TAG, "onFailure: "+t.getMessage());
             }
         });
 
