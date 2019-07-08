@@ -82,15 +82,32 @@ public class MyCameraActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_my_camera);
+        init_data();
+
         button_sytle = findViewById(R.id.buttonStyle);
         button_recording = findViewById(R.id.buttonRecording);
         button_flip = findViewById(R.id.buttonFlip);
         button_exit = findViewById(R.id.buttonExit);
         button_upload = findViewById(R.id.buttonUpload);
         seekBar = findViewById(R.id.seekBar);
-        seekBar.setMax(100);
+        seekBar.setMax(90);
         msurfaceView = findViewById(R.id.surfaceview);
         init();
+    }
+
+    /*
+    @effect:初始所有数据
+     */
+    public void init_data(){
+        CAMERA_TYPE = Camera.CameraInfo.CAMERA_FACING_BACK;
+        CURRENT_CAMERA_TYPE =Camera.CameraInfo.CAMERA_FACING_BACK;
+        TYPE_OUTFILE_IMG = 0;
+        TYPE_OUTFILE_VIDEO = 1;
+        progress_camera =0; //缩放程度
+        rotationDegree = 0; //旋转
+        Camer_sytle = TYPE_OUTFILE_VIDEO;
+        Select_style = TYPE_OUTFILE_IMG;
+        isRecording=false;
     }
 
     /*
@@ -185,7 +202,13 @@ public class MyCameraActivity extends AppCompatActivity {
                 Upload(Select_style);
             }
         });
-
+        //退出
+        button_exit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 
     /*
