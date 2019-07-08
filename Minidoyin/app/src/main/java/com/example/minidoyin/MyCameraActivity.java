@@ -1,11 +1,15 @@
 package com.example.minidoyin;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Picture;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraDevice;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Environment;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -20,12 +24,29 @@ import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import com.bumptech.glide.load.engine.Resource;
+import com.example.minidoyin.bean.PostFeedResponse;
+import com.example.minidoyin.network.DouyinService;
+import com.example.minidoyin.network.ResourceUtils;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.lang.invoke.MutableCallSite;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Multipart;
+import android.os.Build;
 public class MyCameraActivity extends AppCompatActivity {
 
     private static final String TAG = "MyCameraActivity";
@@ -34,18 +55,24 @@ public class MyCameraActivity extends AppCompatActivity {
     private int TYPE_OUTFILE_VIDEO = 1;
     private int progress_camera =0; //缩放程度
     private int rotationDegree = 0; //旋转
+    private int Camer_sytle = TYPE_OUTFILE_VIDEO;
+    private int Select_style = TYPE_OUTFILE_IMG;
     private boolean isRecording=false;
+    private Uri mSelectImg;
+    private Uri mSelectVideo;
 
     private SurfaceView msurfaceView;
     private SurfaceHolder msurfaceHolder;
     private android.hardware.Camera mcamera;
     private MediaRecorder mmediaRecorder;
 
+
     private SeekBar seekBar;
     private Button button_flip;
     private Button button_upload;
     private Button button_exit;
     private Button button_recording;
+    private Button button_sytle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +89,7 @@ public class MyCameraActivity extends AppCompatActivity {
     @effect:初始
      */
     public void init(){
+        button_sytle = findViewById(R.id.buttonStyle);
         button_recording = findViewById(R.id.buttonRecording);
         button_flip = findViewById(R.id.buttonFlip);
         button_exit = findViewById(R.id.buttonExit);
@@ -94,47 +122,18 @@ public class MyCameraActivity extends AppCompatActivity {
             }
         });
 
-        //设置视频录制
+
+        //设置视频录制,图片拍摄
         button_recording.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(isRecording){
-                    //结束录制
-                    mmediaRecorder.stop();
-                    mmediaRecorder.reset();
-                    mmediaRecorder.release();
-                    mmediaRecorder=null;
-                    mcamera.lock();
-                    isRecording=false;
-                    Toast.makeText(MyCameraActivity.this,"结束录制",Toast.LENGTH_LONG).show();
-                }else{
-                    //开始录制
-                    Toast.makeText(MyCameraActivity.this,"开始录制",Toast.LENGTH_LONG).show();
-                    isRecording = true;
-                    mmediaRecorder = new MediaRecorder();
-                    mcamera.unlock();
-                    mmediaRecorder.setCamera(mcamera);
-                    mmediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-                    mmediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-                    mmediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_1080P));
-                    mmediaRecorder.setOutputFile(getOutputFile(TYPE_OUTFILE_VIDEO).toString());
-                    mmediaRecorder.setPreviewDisplay(msurfaceView.getHolder().getSurface());
-                    mmediaRecorder.setOrientationHint(rotationDegree);
-
-                    try {
-                        mmediaRecorder.prepare();
-                    }catch (Exception e){
-                        //释放 mmediaRecorder
-                        /*
-                        mmediaRecorder.stop();
-                        mmediaRecorder.reset();
-                        mmediaRecorder.release();
-                        mmediaRecorder=null;
-                        */
-                        e.printStackTrace();
-                    }
-                    mmediaRecorder.start();
+                if(Camer_sytle == TYPE_OUTFILE_IMG){
+                    mcamera.takePicture(null,null,mPicture);
                 }
+                else if(Camer_sytle ==TYPE_OUTFILE_VIDEO){
+                    open_close_video();
+                }
+
             }
         });
         //翻转按钮
@@ -163,7 +162,73 @@ public class MyCameraActivity extends AppCompatActivity {
             }
         });
 
+        //切换拍照、录像模式
+        button_sytle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(Camer_sytle == TYPE_OUTFILE_VIDEO){
+                    Camer_sytle = TYPE_OUTFILE_IMG;
+                    button_sytle.setText("拍照");
+                }
+                else if(Camer_sytle == TYPE_OUTFILE_IMG){
+                    Camer_sytle = TYPE_OUTFILE_VIDEO;
+                    button_sytle.setText("录像");
+                }
 
+            }
+        });
+
+        //开始上传
+        button_upload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Upload(Select_style);
+            }
+        });
+
+    }
+
+    /*
+    @effct:开启，关闭录制
+     */
+    public void open_close_video(){
+        if(isRecording){
+            //结束录制
+            mmediaRecorder.stop();
+            mmediaRecorder.reset();
+            mmediaRecorder.release();
+            mmediaRecorder=null;
+            mcamera.lock();
+            isRecording=false;
+            Toast.makeText(MyCameraActivity.this,"结束录制",Toast.LENGTH_LONG).show();
+        }else{
+            //开始录制
+            Toast.makeText(MyCameraActivity.this,"开始录制",Toast.LENGTH_LONG).show();
+            isRecording = true;
+            mmediaRecorder = new MediaRecorder();
+            mcamera.unlock();
+            mmediaRecorder.setCamera(mcamera);
+            mmediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            mmediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+            mmediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_1080P));
+            mmediaRecorder.setOutputFile(getOutputFile(TYPE_OUTFILE_VIDEO).toString());
+            mmediaRecorder.setPreviewDisplay(msurfaceView.getHolder().getSurface());
+            mmediaRecorder.setOrientationHint(rotationDegree);
+
+            try {
+                mmediaRecorder.prepare();
+            }catch (Exception e){
+                //释放 mmediaRecorder
+                        /*
+                        mmediaRecorder.stop();
+                        mmediaRecorder.reset();
+                        mmediaRecorder.release();
+                        mmediaRecorder=null;
+                        */
+                e.printStackTrace();
+            }
+            mmediaRecorder.start();
+        }
     }
 
     /*
@@ -313,7 +378,11 @@ public class MyCameraActivity extends AppCompatActivity {
         }else{
             return  null;
         }
-
+        /*设置file 保存刷新在camera中 但没生效
+        Uri localUri = Uri.fromFile(outputFile);
+        Intent localIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,localUri);
+        sendBroadcast(localIntent);
+            */
         return outputFile;
     }
 
@@ -367,6 +436,115 @@ public class MyCameraActivity extends AppCompatActivity {
             }
         }
         return optimalSize;
+    }
+
+    /*
+    @effect:图片拍摄
+     */
+    private Camera.PictureCallback mPicture =(data,camera)->{
+        File picturefile = getOutputFile(TYPE_OUTFILE_IMG);
+        if(picturefile ==null){
+            return;
+        }
+        try{
+            FileOutputStream fos = new FileOutputStream(picturefile);
+            fos.write(data);
+            fos.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        mcamera.startPreview();
+        Toast.makeText(this,"拍照完毕",Toast.LENGTH_LONG).show();;
+        AutoFocus();
+    };
+
+
+    /*
+    @effect:上传材料
+     */
+    private void Upload (int style){
+        Intent intent = new Intent();
+        if(style==TYPE_OUTFILE_IMG){
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent,"select img"),TYPE_OUTFILE_IMG);
+
+        }else if(style==TYPE_OUTFILE_VIDEO){
+            intent.setType("video/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent,"select_video"),TYPE_OUTFILE_VIDEO);
+        }
+
+    }
+
+    /*
+    @effect:intent 返回值
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==RESULT_OK && data!=null){
+            if(requestCode==TYPE_OUTFILE_IMG){
+                mSelectImg=data.getData();
+                Toast.makeText(this,"获取图片成功，继续上传视频",Toast.LENGTH_LONG).show();
+                Select_style = TYPE_OUTFILE_VIDEO;
+            }else if(requestCode==TYPE_OUTFILE_VIDEO){
+                mSelectVideo=data.getData();
+                Toast.makeText(this,"获取视频成功",Toast.LENGTH_LONG).show();
+                Select_style = TYPE_OUTFILE_IMG;
+                Post();
+            }
+        }
+
+    }
+
+    /*
+    @effect:post IMG && VIDEO
+     */
+    private void Post(){
+        MultipartBody.Part cover_image = getMultipartFromUri("cover_image",mSelectImg);
+        MultipartBody.Part video = getMultipartFromUri("video",mSelectVideo);
+        Retrofit retrofit= new Retrofit.Builder()
+                .baseUrl("http://test.androidcamp.bytedance.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+       Call<PostFeedResponse> call=retrofit.create(DouyinService.class)
+               .postVideo("123456","bilibili",
+                       cover_image,video);
+
+       call.enqueue(new Callback<PostFeedResponse>() {
+           @Override
+           public void onResponse(Call<PostFeedResponse> call, Response<PostFeedResponse> response) {
+               if(response.isSuccessful()){
+                   if(response.body()!=null&&response.body().getSuccess()){
+                       Toast.makeText(getApplicationContext(),"上传成功",Toast.LENGTH_LONG).show();
+                   }
+                   else{
+                       Toast.makeText(getApplicationContext(),"上传失败",Toast.LENGTH_LONG).show();
+                   }
+               }
+               else{
+                   Toast.makeText(getApplicationContext(),"上传失败",Toast.LENGTH_LONG).show();
+               }
+
+           }
+
+           @Override
+           public void onFailure(Call<PostFeedResponse> call, Throwable t) {
+                Toast.makeText(getApplicationContext(),"上传失败",Toast.LENGTH_LONG).show();
+           }
+       });
+
+
+
+
+    }
+
+    private MultipartBody.Part getMultipartFromUri(String name,Uri uri){
+        File file = new File(ResourceUtils.getRealPath(MyCameraActivity.this,uri));
+        RequestBody requestBody = RequestBody.create(MediaType.parse("multipart/form-data"),file);
+        return MultipartBody.Part.createFormData(name, file.getName(),requestBody);
+
     }
 
 }
