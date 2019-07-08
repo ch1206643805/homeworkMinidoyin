@@ -51,6 +51,7 @@ public class MyCameraActivity extends AppCompatActivity {
 
     private static final String TAG = "MyCameraActivity";
     private int CAMERA_TYPE = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private int CURRENT_CAMERA_TYPE =Camera.CameraInfo.CAMERA_FACING_BACK;
     private int TYPE_OUTFILE_IMG = 0;
     private int TYPE_OUTFILE_VIDEO = 1;
     private int progress_camera =0; //缩放程度
@@ -81,14 +82,6 @@ public class MyCameraActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_my_camera);
-
-        init();
-    }
-
-    /*
-    @effect:初始
-     */
-    public void init(){
         button_sytle = findViewById(R.id.buttonStyle);
         button_recording = findViewById(R.id.buttonRecording);
         button_flip = findViewById(R.id.buttonFlip);
@@ -96,9 +89,16 @@ public class MyCameraActivity extends AppCompatActivity {
         button_upload = findViewById(R.id.buttonUpload);
         seekBar = findViewById(R.id.seekBar);
         seekBar.setMax(100);
-
-        mcamera = getCamera(CAMERA_TYPE);
         msurfaceView = findViewById(R.id.surfaceview);
+        init();
+    }
+
+    /*
+    @effect:初始
+     */
+    public void init(){
+        
+        mcamera = getCamera(CAMERA_TYPE);
         msurfaceHolder = msurfaceView.getHolder();
         msurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         msurfaceHolder.addCallback(new SurfaceHolder.Callback() {
@@ -116,9 +116,9 @@ public class MyCameraActivity extends AppCompatActivity {
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                mcamera.stopPreview();
-                mcamera.release();
-                mcamera = null;
+       //         mcamera.stopPreview();
+      //          mcamera.release();
+      //          mcamera = null;
             }
         });
 
@@ -236,13 +236,13 @@ public class MyCameraActivity extends AppCompatActivity {
      */
     private  Camera getCamera(int position){
         CAMERA_TYPE = position;
+        CURRENT_CAMERA_TYPE =position;
         if (mcamera != null) {
             mcamera.release();
         }
         Camera cam = Camera.open(position);
         rotationDegree =getCameraDisplayOrientation(position);
         cam.setDisplayOrientation(rotationDegree);
-        Log.i(TAG, "getCamera: "+rotationDegree);
         return cam;
     }
 
@@ -255,8 +255,10 @@ public class MyCameraActivity extends AppCompatActivity {
         mcamera.release();
         if(CAMERA_TYPE == Camera.CameraInfo.CAMERA_FACING_BACK){
             mcamera = getCamera(Camera.CameraInfo.CAMERA_FACING_FRONT);
+            CURRENT_CAMERA_TYPE=Camera.CameraInfo.CAMERA_FACING_FRONT;
         }else{
             mcamera = getCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
+            CURRENT_CAMERA_TYPE=Camera.CameraInfo.CAMERA_FACING_BACK;
         }
         //调整camera 大小
 
@@ -330,7 +332,7 @@ public class MyCameraActivity extends AppCompatActivity {
     }
 
     /*
-    @effect:后置摄像头 自动调焦
+    @effect:摄像头自动调焦
      */
     private void AutoFocus(){
         mcamera.autoFocus(new Camera.AutoFocusCallback() {
@@ -391,16 +393,6 @@ public class MyCameraActivity extends AppCompatActivity {
      */
     private void  newHoler(){
         msurfaceHolder = msurfaceView.getHolder();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
 
@@ -547,4 +539,34 @@ public class MyCameraActivity extends AppCompatActivity {
 
     }
 
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        if(mcamera==null){
+            mcamera =getCamera(CURRENT_CAMERA_TYPE);
+            msurfaceHolder = msurfaceView.getHolder();
+            try {
+                mcamera.setPreviewDisplay(msurfaceHolder);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            mcamera.startPreview();
+            Log.i(TAG, "onResume: "+mcamera);
+            if(CURRENT_CAMERA_TYPE == Camera.CameraInfo.CAMERA_FACING_BACK){
+                AutoFocus();
+            }
+        }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }
