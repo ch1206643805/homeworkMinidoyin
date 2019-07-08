@@ -2,6 +2,7 @@ package com.example.minidoyin.Fragment;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -23,15 +24,14 @@ import org.xmlpull.v1.XmlPullParser;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
+import com.example.minidoyin.chatroom;
 /**
  * A simple {@link Fragment} subclass.
  */
 public class message_page_Fragment extends Fragment {
 
     private List<message> messagess=null;
-    private int index =0;
-
+    private ListView listView;
     public message_page_Fragment() {
         // Required empty public constructor
     }
@@ -42,24 +42,30 @@ public class message_page_Fragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_message_page_, container, false);
-        ListView listView = view.findViewById(R.id.listview_message);
+        listView = view.findViewById(R.id.listview_message);
 
         try {
             messagess =pull(getResources().getAssets().open("data.xml"));
             //listview
-            ListViewBaseAdapter listViewBaseAdapter =new ListViewBaseAdapter(getContext(),messagess.size());
-            listView.setAdapter(listViewBaseAdapter);
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Toast.makeText(getContext(),"点击了 "+position,Toast.LENGTH_LONG).show();
-                }
-            });
+            setListview();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return view;
+    }
+    private ListViewBaseAdapter listViewBaseAdapte;
+    public void setListview(){
+        listViewBaseAdapte =new ListViewBaseAdapter(getContext(),messagess.size());
+        listView.setAdapter(listViewBaseAdapte);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getContext(),chatroom.class);
+                startActivity(intent);
+            }
+        });
+
     }
 
     public class ListViewBaseAdapter extends BaseAdapter {
@@ -70,7 +76,7 @@ public class message_page_Fragment extends Fragment {
             this.count=count;
         }
         @Override public int getCount() {
-            return 100;
+            return 30;
         }
         @Override public Object getItem(int i) {
             return null;
@@ -93,20 +99,20 @@ public class message_page_Fragment extends Fragment {
             TextView time=view.findViewById(R.id.tv_time);
             ImageView imageView=view.findViewById(R.id.robot_notice);
 
-            if(index<this.count) {
-                Log.i("1", "getView: "+index+"  "+this.count+"  "+messagess.get(0).getTitle());
-                title.setText(messagess.get(index).getTitle());
-                describe.setText(messagess.get(index).getHashtag());
-                time.setText(messagess.get(index).getTime());
-                if (messagess.get(index).getIcon().equals("TYPE_ROBOT")) {
-                    imageView.setVisibility(View.VISIBLE);
-                } else if (messagess.get(index).getIcon().equals("TYPE_GAME")) {
-                    imageView.setVisibility(View.VISIBLE);
-                } else if (messagess.get(index).getIcon().equals("TYPE_SYSTEM")) {
-                    imageView.setVisibility(View.VISIBLE);
-                }
-                index++;
+            title.setText(messagess.get(position).getTitle());
+            describe.setText(messagess.get(position).getHashtag());
+            time.setText(messagess.get(position).getTime());
+            if (messagess.get(position).getIcon().equals("TYPE_ROBOT")) {
+                imageView.setVisibility(View.VISIBLE);
+            } else if (messagess.get(position).getIcon().equals("TYPE_GAME")) {
+                imageView.setVisibility(View.VISIBLE);
+            } else if (messagess.get(position).getIcon().equals("TYPE_SYSTEM")) {
+                imageView.setVisibility(View.VISIBLE);
             }
+            else{
+                imageView.setVisibility(View.INVISIBLE);
+            }
+
 
             return view;
         }
@@ -181,4 +187,14 @@ public class message_page_Fragment extends Fragment {
         return list;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
 }
